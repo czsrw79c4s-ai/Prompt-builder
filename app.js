@@ -71,7 +71,12 @@ function selectedIds(sectionId) { return (state.selections[sectionId] || []).fil
 function buildPrompt() {
   const parts = ['anime illustration'];
   parts.push(...selectedEnglish('animeStyle'), ...selectedEnglish('fantasy'), ...selectedEnglish('gender'), ...selectedEnglish('age'), ...selectedEnglish('hairPresence'), ...selectedEnglish('hairLength'), ...selectedEnglish('hairColor'), ...selectedEnglish('hairTexture'));
-  if (selectedIds('fantasy').includes('fantasy')) { parts.push('fantasy character design'); const traits = selectedIds('fantasyTraits'); const rule = PROMPT_RULES.find(r => r.when(traits)); parts.push(rule ? rule.phrase : ...selectedEnglish('fantasyTraits')); }
+  if (selectedIds('fantasy').includes('fantasy')) {
+    parts.push('fantasy character design');
+    const traits = selectedIds('fantasyTraits');
+    const rule = PROMPT_RULES.find(r => r.when(traits));
+    if (rule) parts.push(rule.phrase); else parts.push(...selectedEnglish('fantasyTraits'));
+  }
   parts.push(...selectedEnglish('outfitType'), ...selectedEnglish('clothingTexture'), ...selectedEnglish('clothingColor'), ...selectedEnglish('clothingSize'), ...selectedEnglish('specialClothing'), ...selectedEnglish('upperClothing'), ...selectedEnglish('lowerClothing'));
   const colors = state.selections.outfitColorRoles || {};
   if (colors.main?.length) parts.push(`${colors.main.map(colorWord).join(' and ')} as the main colors`);
@@ -84,7 +89,7 @@ function buildPrompt() {
 }
 function colorWord(id) { return {white:'white',cream:'cream',black:'black',pink:'pink',blue:'blue',lavender:'lavender'}[id] || id; }
 function resolveCombination(ids, rules) { const phrases=[], consumed=new Set(); for (const rule of [...rules].sort((a,b)=>b.ids.length-a.ids.length)) if (rule.ids.every(id=>ids.includes(id))) { phrases.push(rule.phrase); rule.ids.forEach(id=>consumed.add(id)); } for (const id of ids.filter(id=>!consumed.has(id))) { const match=STEPS.flatMap(s=>s.sections).flatMap(s=>s.options||[]).find(o=>o[0]===id); if(match?.[2]) phrases.push(match[2]); } return phrases; }
-function clean(parts) { return parts.filter(Boolean).map(p=>p.trim()).filter((p,i,a)=>a.indexOf(p)===i); }
+function clean(parts) { return parts.filter(Boolean).map(p => p.trim()).filter((p,i,a)=>a.indexOf(p)===i); }
 async function copyPrompt() { try { await navigator.clipboard.writeText(promptOutput.value); document.getElementById('copyButton').textContent='コピーしました'; setTimeout(()=>document.getElementById('copyButton').textContent='コピー',1400); } catch { promptOutput.select(); document.execCommand('copy'); } }
 function reset() { state.step=0; state.selections={}; resultView.classList.add('hidden'); builderView.classList.remove('hidden'); renderStep(); }
 init();
